@@ -1,0 +1,54 @@
+{
+    "name": "payglocal/pg-client-sdk-php",
+    "description": "PayGlocal Client SDK for PHP - Official PHP SDK for PayGlocal payment gateway integration",
+    "type": "library",
+    "license": "MIT",
+    "keywords": [
+        "payglocal",
+        "payment",
+        "gateway",
+        "sdk",
+        "php",
+        "jwt",
+        "jwe",
+        "jws",
+        "encryption",
+        "payment-processing"
+    ],
+    "authors": [
+        {
+            "name": "PayGlocal",
+            "email": "support@payglocal.in"
+        }
+    ],
+    "require": {
+        "php": ">=8.0",
+        "ext-curl": "*",
+        "ext-openssl": "*",
+        "ext-json": "*",
+        "web-token/jwt-framework": "^3.0"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^9.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "PayGlocal\\PgClientSdk\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "PayGlocal\\PgClientSdk\\Tests\\": "tests/"
+        }
+    },
+    "scripts": {
+        "test": "phpunit",
+        "test-coverage": "phpunit --coverage-html coverage"
+    },
+    "config": {
+        "optimize-autoloader": true,
+        "sort-packages": true
+    },
+    "minimum-stability": "stable",
+    "prefer-stable": true
+} 
