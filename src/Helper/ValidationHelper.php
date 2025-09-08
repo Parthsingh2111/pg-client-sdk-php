@@ -77,16 +77,21 @@ class ValidationHelper
                 }
 
                 if ($actual === $value && !empty($conditionalFields)) {
-                    $conditionalData = [];
+                    // Validate conditional fields directly from payload
                     foreach ($conditionalFields as $field) {
                         $keys = explode('.', $field);
                         $val = $payload;
                         foreach ($keys as $key) {
-                            $val = $val[$key] ?? null;
+                            if (!isset($val[$key])) {
+                                throw new \Exception("Missing required field: $field");
+                            }
+                            $val = $val[$key];
                         }
-                        $conditionalData[$field] = $val;
+                        
+                        if (empty($val) && $val !== 0 && $val !== '0') {
+                            throw new \Exception("Required field cannot be empty: $field");
+                        }
                     }
-                    Validators::validateRequiredFields($conditionalData, $conditionalFields);
                 }
             }
 

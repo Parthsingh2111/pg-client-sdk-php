@@ -2,29 +2,35 @@
 
 namespace PayGlocal\PgClientSdk\Utils;
 
-use PayGlocal\PgClientSdk\Utils\Logger;
-
 /**
  * Schema Validator for JSON schema validation
- * Matches JavaScript schemaValidator.js behavior exactly
+ * Mirrors JavaScript schemaValidator.js behavior
  */
 class SchemaValidator
 {
     private array $payglocalSchema;
+
+    private const EXPECTED_HIERARCHY = [
+        'root' => ['merchantTxnId','merchantUniqueId','captureTxn','gpiTxnTimeout','totalAmount','txnCurrency','paymentData', 'standingInstruction', 'riskData','merchantCallbackURL'],
+        'paymentData' => ['totalAmount','cardData', 'tokenData', 'billingData'],
+        'standingInstruction' => ['data'],
+        'riskData' => ['orderData', 'customerData', 'shippingData', 'flightData', 'trainData', 'busData', 'cabData', 'lodgingData'],
+        'riskData_flightData' => ['legData', 'passengerData'],
+        'riskData_trainData' => ['legData', 'passengerData'],
+        'riskData_busData' => ['legData', 'passengerData'],
+        'riskData_cabData' => ['legData', 'passengerData'],
+        'riskData_lodgingData' => ['rooms']
+    ];
 
     public function __construct()
     {
         $this->payglocalSchema = $this->getPayglocalSchema();
     }
 
-    /**
-     * Get the complete PayGlocal schema (matches JavaScript exactly)
-     * @return array
-     */
     private function getPayglocalSchema(): array
     {
         return [
-            'type' => 'array', // PHP associative arrays are arrays, not objects
+            'type' => 'object',
             'required' => ['merchantTxnId', 'merchantCallbackURL', 'paymentData'],
             'properties' => [
                 'merchantTxnId' => ['type' => 'string'],
@@ -33,105 +39,46 @@ class SchemaValidator
                 'captureTxn' => ['type' => ['boolean', 'null']],
                 'gpiTxnTimeout' => ['type' => 'string'],
                 'paymentData' => [
-                    'type' => 'array', // PHP associative arrays are arrays
+                    'type' => 'object',
                     'required' => ['totalAmount', 'txnCurrency'],
                     'properties' => [
                         'totalAmount' => ['type' => 'string'],
                         'txnCurrency' => ['type' => 'string'],
                         'cardData' => [
-                            'type' => 'array', // PHP associative arrays are arrays
+                            'type' => 'object',
                             'properties' => [
                                 'number' => ['type' => 'string'],
                                 'expiryMonth' => ['type' => 'string'],
                                 'expiryYear' => ['type' => 'string'],
                                 'securityCode' => ['type' => 'string'],
                                 'type' => ['type' => 'string']
-                            ],
-                            'additionalProperties' => false
+                            ]
                         ],
                         'tokenData' => [
-                            'type' => 'array', // PHP associative arrays are arrays
+                            'type' => 'object',
                             'properties' => [
+                                'altId' => ['type' => 'string'],
                                 'number' => ['type' => 'string'],
                                 'expiryMonth' => ['type' => 'string'],
                                 'expiryYear' => ['type' => 'string'],
+                                'securityCode' => ['type' => 'string'],
+                                'requestorID' => ['type' => 'string'],
+                                'hashOfFirstSix' => ['type' => 'string'],
                                 'cryptogram' => ['type' => 'string'],
                                 'firstSix' => ['type' => 'string'],
-                                'lastFour' => ['type' => 'string'],
+                                'lastFour' => ['type' => ['string', 'null']],
                                 'cardBrand' => ['type' => 'string'],
                                 'cardCountryCode' => ['type' => 'string'],
                                 'cardIssuerName' => ['type' => 'string'],
                                 'cardType' => ['type' => 'string'],
-                                'cardCategory' => ['type' => 'string']
-                            ],
-                            'additionalProperties' => false
-                        ],
-                        'billingData' => [
-                            'type' => 'array', // PHP associative arrays are arrays
-                            'properties' => [
-                                'firstName' => ['type' => 'string'],
-                                'lastName' => ['type' => 'string'],
-                                'addressStreet1' => ['type' => 'string'],
-                                'addressStreet2' => ['type' => ['string', 'null']],
-                                'addressCity' => ['type' => 'string'],
-                                'addressState' => ['type' => 'string'],
-                                'addressPostalCode' => ['type' => 'string'],
-                                'emailId' => ['type' => 'string'],
-                                'phoneNumber' => ['type' => 'string']
-                            ],
-                            'additionalProperties' => false
-                        ]
-                    ],
-                    'additionalProperties' => false
-                ],
-                'standingInstruction' => [
-                    'type' => 'array', // PHP associative arrays are arrays
-                    'properties' => [
-                        'data' => [
-                            'type' => 'array', // PHP associative arrays are arrays
-                            'properties' => [
-                                'amount' => ['type' => 'string'],
-                                'maxAmount' => ['type' => 'string'],
-                                'numberOfPayments' => ['type' => 'string'],
-                                'frequency' => ['type' => 'string'],
-                                'type' => ['type' => 'string'],
-                                'startDate' => ['type' => 'string']
-                            ],
-                            'additionalProperties' => false
-                        ]
-                    ],
-                    'additionalProperties' => false
-                ],
-                'riskData' => [
-                    'type' => 'array', // PHP associative arrays are arrays
-                    'properties' => [
-                        'orderData' => [
-                            'type' => 'array',
-                            'items' => [
-                                'type' => 'array', // PHP associative arrays are arrays
-                                'properties' => [
-                                    'productDescription' => ['type' => 'string'],
-                                    'productSKU' => ['type' => 'string'],
-                                    'productType' => ['type' => 'string'],
-                                    'itemUnitPrice' => ['type' => 'string'],
-                                    'itemQuantity' => ['type' => 'string']
-                                ],
-                                'additionalProperties' => false
+                                'cardCategory' => ['type' => 'string'],
+                                'referenceNo' => ['type' => 'string']
                             ]
                         ],
-                        'customerData' => [
-                            'type' => 'array', // PHP associative arrays are arrays
+                        'billingData' => [
+                            'type' => 'object',
                             'properties' => [
-                                'customerAccountType' => ['type' => 'string'],
-                                'customerSuccessOrderCount' => ['type' => 'string'],
-                                'customerAccountCreationDate' => ['type' => 'string'],
-                                'merchantAssignedCustomerId' => ['type' => 'string']
-                            ],
-                            'additionalProperties' => false
-                        ],
-                        'shippingData' => [
-                            'type' => 'array', // PHP associative arrays are arrays
-                            'properties' => [
+                                'fullName' => ['type' => 'string'],
                                 'firstName' => ['type' => 'string'],
                                 'lastName' => ['type' => 'string'],
                                 'addressStreet1' => ['type' => 'string'],
@@ -142,14 +89,76 @@ class SchemaValidator
                                 'addressPostalCode' => ['type' => 'string'],
                                 'addressCountry' => ['type' => 'string'],
                                 'emailId' => ['type' => 'string'],
+                                'callingCode' => ['type' => 'string'],
+                                'phoneNumber' => ['type' => 'string'],
+                                'panNumber' => ['type' => 'string']
+                            ]
+                        ]
+                        ]
+                    ],
+                'standingInstruction' => [
+                    'type' => 'object',
+                    'properties' => [
+                        'data' => [
+                            'type' => 'object',
+                            'properties' => [
+                                'amount' => ['type' => 'string'],
+                                'maxAmount' => ['type' => 'string'],
+                                'numberOfPayments' => ['type' => 'string'],
+                                'frequency' => ['type' => 'string'],
+                                'type' => ['type' => 'string'],
+                                'startDate' => ['type' => 'string']
+                            ]
+                        ]
+                    ]
+                ],
+                'riskData' => [
+                    'type' => 'object',
+                    'properties' => [
+                        'orderData' => [
+                            'type' => 'array',
+                            'items' => [
+                                'type' => 'object',
+                                'properties' => [
+                                    'productDescription' => ['type' => 'string'],
+                                    'productSKU' => ['type' => 'string'],
+                                    'productType' => ['type' => 'string'],
+                                    'itemUnitPrice' => ['type' => 'string'],
+                                    'itemQuantity' => ['type' => 'string']
+                                ]
+                            ]
+                        ],
+                        'customerData' => [
+                            'type' => 'object',
+                            'properties' => [
+                                'customerAccountType' => ['type' => 'string'],
+                                'customerSuccessOrderCount' => ['type' => 'string'],
+                                'customerAccountCreationDate' => ['type' => 'string'],
+                                'merchantAssignedCustomerId' => ['type' => 'string']
+                            ]
+                        ],
+                        'shippingData' => [
+                            'type' => 'object',
+                            'properties' => [
+                                'fullName' => ['type' => 'string'],
+                                'firstName' => ['type' => 'string'],
+                                'lastName' => ['type' => 'string'],
+                                'addressStreet1' => ['type' => 'string'],
+                                'addressStreet2' => ['type' => ['string', 'null']],
+                                'addressCity' => ['type' => 'string'],
+                                'addressState' => ['type' => 'string'],
+                                'addressStateCode' => ['type' => 'string'],
+                                'addressPostalCode' => ['type' => 'string'],
+                                'addressCountry' => ['type' => 'string'],
+                                'emailId' => ['type' => 'string'],
+                                'callingCode' => ['type' => 'string'],
                                 'phoneNumber' => ['type' => 'string']
-                            ],
-                            'additionalProperties' => false
+                            ]
                         ],
                         'flightData' => [
                             'type' => 'array',
                             'items' => [
-                                'type' => 'array', // PHP associative arrays are arrays
+                                'type' => 'object',
                                 'properties' => [
                                     'agentCode' => ['type' => 'string'],
                                     'agentName' => ['type' => 'string'],
@@ -168,10 +177,10 @@ class SchemaValidator
                                     'legData' => [
                                         'type' => 'array',
                                         'items' => [
-                                            'type' => 'array', // PHP associative arrays are arrays
+                                            'type' => 'object',
                                             'properties' => [
-                                                'routeId' => ['type' => 'string'],
-                                                'legId' => ['type' => 'string'],
+                                                'routeId' => ['anyOf' => [ ['type' => 'string'], ['type' => 'number'] ]],
+                                                'legId' => ['anyOf' => [ ['type' => 'string'], ['type' => 'number'] ]],
                                                 'flightNumber' => ['type' => 'string'],
                                                 'departureDate' => ['type' => 'string'],
                                                 'departureAirportCode' => ['type' => 'string'],
@@ -184,48 +193,45 @@ class SchemaValidator
                                                 'carrierCode' => ['type' => 'string'],
                                                 'carrierName' => ['type' => 'string'],
                                                 'serviceClass' => ['type' => 'string']
-                                            ],
-                                            'additionalProperties' => false
+                                            ]
                                         ]
                                     ],
                                     'passengerData' => [
                                         'type' => 'array',
                                         'items' => [
-                                            'type' => 'array', // PHP associative arrays are arrays
+                                            'type' => 'object',
                                             'properties' => [
                                                 'title' => ['type' => ['string', 'null']],
                                                 'firstName' => ['type' => 'string'],
                                                 'lastName' => ['type' => 'string'],
-                                                'dateOfBirth' => ['type' => 'string'],
+                                                'dateOfBirth' => ['type' => 'string', 'pattern' => '^[0-9]{1,8}$'],
                                                 'type' => ['type' => 'string'],
                                                 'email' => ['type' => 'string'],
                                                 'passportNumber' => ['type' => 'string'],
                                                 'passportCountry' => ['type' => 'string'],
-                                                'passportIssueDate' => ['type' => 'string'],
-                                                'passportExpiryDate' => ['type' => 'string'],
+                                                'passportIssueDate' => ['type' => 'string', 'maxLength' => 8],
+                                                'passportExpiryDate' => ['type' => 'string', 'maxLength' => 8],
                                                 'referenceNumber' => ['type' => 'string']
-                                            ],
-                                            'additionalProperties' => false
+                                            ]
                                         ]
                                     ]
-                                ],
-                                'additionalProperties' => false
+                                ]
                             ]
                         ],
                         'trainData' => [
                             'type' => 'array',
                             'items' => [
-                                'type' => 'array', // PHP associative arrays are arrays
+                                'type' => 'object',
                                 'properties' => [
                                     'ticketNumber' => ['type' => 'string'],
-                                    'reservationDate' => ['type' => 'string'],
+                                    'reservationDate' => ['type' => 'string', 'maxLength' => 8, 'pattern' => '^[0-9]{1,8}$'],
                                     'legData' => [
                                         'type' => 'array',
                                         'items' => [
-                                            'type' => 'array', // PHP associative arrays are arrays
+                                            'type' => 'object',
                                             'properties' => [
-                                                'routeId' => ['type' => 'string'],
-                                                'legId' => ['type' => 'string'],
+                                                'routeId' => ['anyOf' => [ ['type' => 'string'], ['type' => 'number'] ]],
+                                                'legId' => ['anyOf' => [ ['type' => 'string'], ['type' => 'number'] ]],
                                                 'trainNumber' => ['type' => 'string'],
                                                 'departureDate' => ['type' => 'string'],
                                                 'departureCity' => ['type' => 'string'],
@@ -233,45 +239,34 @@ class SchemaValidator
                                                 'arrivalDate' => ['type' => 'string'],
                                                 'arrivalCity' => ['type' => 'string'],
                                                 'arrivalCountry' => ['type' => 'string']
-                                            ],
-                                            'additionalProperties' => false
+                                            ]
                                         ]
                                     ],
                                     'passengerData' => [
                                         'type' => 'array',
                                         'items' => [
-                                            'type' => 'array', // PHP associative arrays are arrays
+                                            'type' => 'object',
                                             'properties' => [
-                                                'title' => ['type' => ['string', 'null']],
                                                 'firstName' => ['type' => 'string'],
                                                 'lastName' => ['type' => 'string'],
-                                                'dateOfBirth' => ['type' => 'string'],
-                                                'type' => ['type' => 'string'],
-                                                'email' => ['type' => 'string'],
-                                                'passportNumber' => ['type' => 'string'],
-                                                'passportCountry' => ['type' => 'string'],
-                                                'passportIssueDate' => ['type' => 'string'],
-                                                'passportExpiryDate' => ['type' => 'string'],
-                                                'referenceNumber' => ['type' => 'string']
-                                            ],
-                                            'additionalProperties' => false
+                                                'dateOfBirth' => ['type' => 'string']
+                                            ]
                                         ]
                                     ]
-                                ],
-                                'additionalProperties' => false
+                                ]
                             ]
                         ],
                         'busData' => [
                             'type' => 'array',
                             'items' => [
-                                'type' => 'array', // PHP associative arrays are arrays
+                                'type' => 'object',
                                 'properties' => [
                                     'ticketNumber' => ['type' => 'string'],
                                     'reservationDate' => ['type' => 'string'],
                                     'legData' => [
                                         'type' => 'array',
                                         'items' => [
-                                            'type' => 'array', // PHP associative arrays are arrays
+                                            'type' => 'object',
                                             'properties' => [
                                                 'routeId' => ['type' => 'string'],
                                                 'legId' => ['type' => 'string'],
@@ -282,133 +277,60 @@ class SchemaValidator
                                                 'arrivalDate' => ['type' => 'string'],
                                                 'arrivalCity' => ['type' => 'string'],
                                                 'arrivalCountry' => ['type' => 'string']
-                                            ],
-                                            'additionalProperties' => false
+                                            ]
                                         ]
                                     ],
                                     'passengerData' => [
                                         'type' => 'array',
                                         'items' => [
-                                            'type' => 'array', // PHP associative arrays are arrays
+                                            'type' => 'object',
                                             'properties' => [
-                                                'title' => ['type' => ['string', 'null']],
                                                 'firstName' => ['type' => 'string'],
                                                 'lastName' => ['type' => 'string'],
                                                 'dateOfBirth' => ['type' => 'string'],
-                                                'type' => ['type' => 'string'],
-                                                'email' => ['type' => 'string'],
-                                                'passportNumber' => ['type' => 'string'],
-                                                'passportCountry' => ['type' => 'string'],
-                                                'passportIssueDate' => ['type' => 'string'],
-                                                'passportExpiryDate' => ['type' => 'string'],
-                                                'referenceNumber' => ['type' => 'string']
-                                            ],
-                                            'additionalProperties' => false
+                                                'passportCountry' => ['type' => 'string']
+                                            ]
                                         ]
                                     ]
-                                ],
-                                'additionalProperties' => false
-                            ]
-                        ],
-                        'shipData' => [
-                            'type' => 'array',
-                            'items' => [
-                                'type' => 'array', // PHP associative arrays are arrays
-                                'properties' => [
-                                    'ticketNumber' => ['type' => 'string'],
-                                    'reservationDate' => ['type' => 'string'],
-                                    'legData' => [
-                                        'type' => 'array',
-                                        'items' => [
-                                            'type' => 'array', // PHP associative arrays are arrays
-                                            'properties' => [
-                                                'routeId' => ['type' => 'string'],
-                                                'legId' => ['type' => 'string'],
-                                                'shipNumber' => ['type' => 'string'],
-                                                'departureDate' => ['type' => 'string'],
-                                                'departureCity' => ['type' => 'string'],
-                                                'departureCountry' => ['type' => 'string'],
-                                                'arrivalDate' => ['type' => 'string'],
-                                                'arrivalCity' => ['type' => 'string'],
-                                                'arrivalCountry' => ['type' => 'string']
-                                            ],
-                                            'additionalProperties' => false
-                                        ]
-                                    ],
-                                    'passengerData' => [
-                                        'type' => 'array',
-                                        'items' => [
-                                            'type' => 'array', // PHP associative arrays are arrays
-                                            'properties' => [
-                                                'title' => ['type' => ['string', 'null']],
-                                                'firstName' => ['type' => 'string'],
-                                                'lastName' => ['type' => 'string'],
-                                                'dateOfBirth' => ['type' => 'string'],
-                                                'type' => ['type' => 'string'],
-                                                'email' => ['type' => 'string'],
-                                                'passportNumber' => ['type' => 'string'],
-                                                'passportCountry' => ['type' => 'string'],
-                                                'passportIssueDate' => ['type' => 'string'],
-                                                'passportExpiryDate' => ['type' => 'string'],
-                                                'referenceNumber' => ['type' => 'string']
-                                            ],
-                                            'additionalProperties' => false
-                                        ]
-                                    ]
-                                ],
-                                'additionalProperties' => false
+                                ]
                             ]
                         ],
                         'cabData' => [
                             'type' => 'array',
                             'items' => [
-                                'type' => 'array', // PHP associative arrays are arrays
+                                'type' => 'object',
                                 'properties' => [
                                     'reservationDate' => ['type' => 'string'],
                                     'legData' => [
                                         'type' => 'array',
                                         'items' => [
-                                            'type' => 'array', // PHP associative arrays are arrays
+                                            'type' => 'object',
                                             'properties' => [
                                                 'routeId' => ['type' => 'string'],
                                                 'legId' => ['type' => 'string'],
-                                                'pickupDate' => ['type' => 'string'],
-                                                'departureCity' => ['type' => 'string'],
-                                                'departureCountry' => ['type' => 'string'],
-                                                'arrivalCity' => ['type' => 'string'],
-                                                'arrivalCountry' => ['type' => 'string']
-                                            ],
-                                            'additionalProperties' => false
+                                                'pickupDate' => ['type' => 'string']
+                                            ]
                                         ]
                                     ],
                                     'passengerData' => [
                                         'type' => 'array',
                                         'items' => [
-                                            'type' => 'array', // PHP associative arrays are arrays
+                                            'type' => 'object',
                                             'properties' => [
-                                                'title' => ['type' => ['string', 'null']],
                                                 'firstName' => ['type' => 'string'],
                                                 'lastName' => ['type' => 'string'],
                                                 'dateOfBirth' => ['type' => 'string'],
-                                                'type' => ['type' => 'string'],
-                                                'email' => ['type' => 'string'],
-                                                'passportNumber' => ['type' => 'string'],
-                                                'passportCountry' => ['type' => 'string'],
-                                                'passportIssueDate' => ['type' => 'string'],
-                                                'passportExpiryDate' => ['type' => 'string'],
-                                                'referenceNumber' => ['type' => 'string']
-                                            ],
-                                            'additionalProperties' => false
+                                                'passportCountry' => ['type' => 'string']
+                                            ]
                                         ]
                                     ]
-                                ],
-                                'additionalProperties' => false
+                                ]
                             ]
                         ],
                         'lodgingData' => [
                             'type' => 'array',
                             'items' => [
-                                'type' => 'array', // PHP associative arrays are arrays
+                                'type' => 'object',
                                 'properties' => [
                                     'checkInDate' => ['type' => 'string'],
                                     'checkOutDate' => ['type' => 'string'],
@@ -426,7 +348,7 @@ class SchemaValidator
                                     'rooms' => [
                                         'type' => 'array',
                                         'items' => [
-                                            'type' => 'array', // PHP associative arrays are arrays
+                                            'type' => 'object',
                                             'properties' => [
                                                 'roomType' => ['type' => 'string'],
                                                 'roomCategory' => ['type' => 'string'],
@@ -436,104 +358,159 @@ class SchemaValidator
                                                 'guestFirstName' => ['type' => 'string'],
                                                 'guestLastName' => ['type' => 'string'],
                                                 'guestEmail' => ['type' => 'string']
-                                            ],
-                                            'additionalProperties' => false
+                                            ]
                                         ]
                                     ]
-                                ],
-                                'additionalProperties' => false
+                                ]
                             ]
                         ]
-                    ],
-                    'additionalProperties' => false
+                    ]
                 ]
-            ],
-            'additionalProperties' => false
+            ]
         ];
     }
 
-    /**
-     * Validate PayGlocal payload against schema (matches JavaScript exactly)
-     * @param array $payload Payload to validate
-     * @return array Validation result
-     * @throws \Exception
-     */
     public function validatePaycollectPayload(array $payload): array
     {
         $errors = $this->validateSchema($payload, $this->payglocalSchema);
         
         if (!empty($errors)) {
-            Logger::error('Validation errors, verify the payload structure, problematic field', $errors);
-            throw new \Exception('Schema validation failed');
+            $errorsMap = [];
+            foreach ($errors as $error) {
+                $fieldPath = $error['field'];
+                $fieldPath = str_replace(['[', ']'], ['.', ''], $fieldPath);
+                if (!isset($errorsMap[$fieldPath])) {
+                    $errorsMap[$fieldPath] = $error['error'];
+                }
+            }
+
+            $responseShape = [
+                'gid' => null,
+                'status' => 'REQUEST_ERROR',
+                'message' => 'Invalid request fields',
+                'timestamp' => date('c'),
+                'reasonCode' => 'LOCAL-400-001',
+                'data' => null,
+                'errors' => $errorsMap
+            ];
+
+            throw new \Exception(json_encode($responseShape));
         }
+
+        $hierarchicalValidation = $this->validateHierarchicalPlacement($payload);
         
+        if (!empty($hierarchicalValidation['warnings'])) {
+            Logger::warn('Hierarchical placement warnings detected', [
+                'warningCount' => count($hierarchicalValidation['warnings']),
+                'warnings' => $hierarchicalValidation['warnings']
+            ]);
+            
+            foreach ($hierarchicalValidation['warnings'] as $warning) {
+                Logger::warn('Hierarchical Warning: ' . $warning['message'], [
+                    'currentPath' => $warning['currentPath'] ?? null,
+                    'expectedPath' => $warning['expectedPath'] ?? null,
+                    'objectType' => $warning['objectType'] ?? null
+                ]);
+            }
+        }
+
         Logger::debug('Payload has passed payglocal schema validation for payCollect method');
-        return ['message' => 'Payload is valid, payload have passed payglocal schema validation for payCollect method'];
+        return [
+            'message' => 'Payload is valid, payload have passed payglocal schema validation for payCollect method',
+            'hierarchicalWarnings' => $hierarchicalValidation['warnings'] ?? [],
+            'warningCount' => count($hierarchicalValidation['warnings'] ?? [])
+        ];
     }
 
-    /**
-     * Validate data against schema (matches JavaScript logic exactly)
-     * @param mixed $data Data to validate
-     * @param array $schema Schema to validate against
-     * @param string $path Current path for error reporting
-     * @return array Array of validation errors
-     */
     private function validateSchema($data, array $schema, string $path = ''): array
     {
         $errors = [];
         
-        // Check required fields
+        // required
         if (isset($schema['required']) && is_array($schema['required'])) {
             foreach ($schema['required'] as $field) {
-                if (!isset($data[$field])) {
+                if (!is_array($data) || !array_key_exists($field, $data)) {
                     $errors[] = [
-                        'field' => $path ? "{$path}.{$field}" : $field,
-                        'error' => "Missing required field: {$field}"
+                        'field' => $path ? "$path.$field" : $field,
+                        'error' => "Missing required field: $field"
                     ];
                 }
             }
         }
         
-        // Check properties
-        if (isset($schema['properties']) && is_array($data)) {
-            foreach ($data as $key => $value) {
-                if (isset($schema['properties'][$key])) {
-                    $fieldPath = $path ? "{$path}.{$key}" : $key;
-                    $propertySchema = $schema['properties'][$key];
-                    
-                    // Check type
-                    if (isset($propertySchema['type'])) {
-                        $typeErrors = $this->validateType($value, $propertySchema['type'], $fieldPath);
+        // type on current node
+        if (isset($schema['type'])) {
+            $typeErrors = $this->validateType($data, $schema['type'], $path ?: 'root');
                         $errors = array_merge($errors, $typeErrors);
                     }
                     
-                    // Check additional properties
-                    if (isset($propertySchema['additionalProperties']) && $propertySchema['additionalProperties'] === false) {
-                        if (isset($propertySchema['properties'])) {
-                            $allowedKeys = array_keys($propertySchema['properties']);
-                            foreach ($value as $subKey => $subValue) {
-                                if (!in_array($subKey, $allowedKeys)) {
-                                    $errors[] = [
-                                        'field' => $fieldPath,
-                                        'error' => "Unrecognized field \"{$subKey}\""
-                                    ];
-                                }
+        // properties (object)
+        if (isset($schema['properties']) && is_array($schema['properties']) && is_array($data)) {
+            foreach ($schema['properties'] as $key => $propSchema) {
+                if (array_key_exists($key, $data)) {
+                    $fieldPath = $path ? "$path.$key" : $key;
+                    $value = $data[$key];
+
+                    // anyOf support (e.g., string or number)
+                    if (isset($propSchema['anyOf']) && is_array($propSchema['anyOf'])) {
+                        $passesAny = false;
+                        foreach ($propSchema['anyOf'] as $candidate) {
+                            $candidateErrors = [];
+                            if (isset($candidate['type'])) {
+                                $candidateErrors = $this->validateType($value, $candidate['type'], $fieldPath);
+                            }
+                            if (empty($candidateErrors)) {
+                                $passesAny = true;
+                                break;
                             }
                         }
+                        if (!$passesAny) {
+                            $errors[] = [
+                                'field' => $fieldPath,
+                                'error' => 'Invalid type: expected one of anyOf'
+                            ];
+                        }
                     }
-                    
-                    // Recursively validate nested objects
-                    if (is_array($value) && isset($propertySchema['properties'])) {
-                        $nestedErrors = $this->validateSchema($value, $propertySchema, $fieldPath);
-                        $errors = array_merge($errors, $nestedErrors);
+
+                    // type
+                    if (isset($propSchema['type'])) {
+                        $errors = array_merge($errors, $this->validateType($value, $propSchema['type'], $fieldPath));
                     }
-                    
-                    // Validate array items
-                    if (is_array($value) && isset($propertySchema['items'])) {
+
+                    // pattern
+                    if (isset($propSchema['pattern']) && is_string($value)) {
+                        $pattern = '/' . $propSchema['pattern'] . '/';
+                        if (!preg_match($pattern, $value)) {
+                            $errorMsg = (preg_match('/^\^\[0-9\]\+\$|^\^\[0-9\]\{1,8\}\$/', $propSchema['pattern']))
+                                ? 'NOT_NUMERIC'
+                                : 'Pattern mismatch';
+                            $errors[] = [
+                                'field' => $fieldPath,
+                                'error' => $errorMsg
+                            ];
+                        }
+                    }
+
+                    // maxLength
+                    if (isset($propSchema['maxLength']) && is_string($value)) {
+                        if (strlen($value) > (int)$propSchema['maxLength']) {
+                                    $errors[] = [
+                                        'field' => $fieldPath,
+                                'error' => 'OVER_MAX_LENGTH, expected maxLength: ' . $propSchema['maxLength']
+                            ];
+                        }
+                    }
+
+                    // recurse objects
+                    if (is_array($value) && isset($propSchema['properties'])) {
+                        $errors = array_merge($errors, $this->validateSchema($value, $propSchema, $fieldPath));
+                    }
+
+                    // arrays
+                    if (is_array($value) && isset($propSchema['items'])) {
                         foreach ($value as $index => $item) {
-                            $itemPath = "{$fieldPath}[{$index}]";
-                            $itemErrors = $this->validateSchema($item, $propertySchema['items'], $itemPath);
-                            $errors = array_merge($errors, $itemErrors);
+                            $itemPath = $fieldPath . '[' . $index . ']';
+                            $errors = array_merge($errors, $this->validateSchema($item, $propSchema['items'], $itemPath));
                         }
                     }
                 }
@@ -543,13 +520,6 @@ class SchemaValidator
         return $errors;
     }
 
-    /**
-     * Validate data type (matches JavaScript logic exactly)
-     * @param mixed $data Data to validate
-     * @param mixed $type Expected type(s)
-     * @param string $path Field path for error reporting
-     * @return array Array of validation errors
-     */
     private function validateType($data, $type, string $path): array
     {
         $errors = [];
@@ -580,26 +550,125 @@ class SchemaValidator
         return $errors;
     }
 
-    /**
-     * @param mixed $data Data to check
-     * @param string $type Expected type
-     * @return bool Whether data matches type
-     */
     private function isValidType($data, string $type): bool
     {
         switch ($type) {
+            case 'number':
+                return is_int($data) || is_float($data);
             case 'string':
                 return is_string($data);
             case 'boolean':
                 return is_bool($data);
+            case 'object':
+                // JSON objects are associative arrays in PHP
+                return is_array($data);
             case 'array':
                 return is_array($data);
-            case 'object':
-                return is_object($data);
             case 'null':
                 return $data === null;
             default:
                 return false;
         }
     }
-} 
+
+    private function validateHierarchicalPlacement(array $payload): array
+    {
+        $warnings = [];
+
+        $this->check($payload, '', 'root', $warnings);
+
+        return [
+            'isValid' => true,
+            'warnings' => $warnings,
+            'misplacedObjects' => $warnings // keep legacy field name for compatibility
+        ];
+    }
+
+    private function isContainer($val): bool
+    {
+        if (!$val || !is_array($val)) return false;
+        if (array_keys($val) !== range(0, count($val) - 1)) return true; // Associative array (object)
+        return true; // Indexed array
+    }
+
+    private function nextPathFor(string $expectedPath, string $key): string
+    {
+        $next = $expectedPath;
+        if ($expectedPath === 'root') {
+            if ($key === 'paymentData') $next = 'paymentData';
+            else if ($key === 'standingInstruction') $next = 'standingInstruction';
+            else if ($key === 'riskData') $next = 'riskData';
+        } else if ($expectedPath === 'paymentData') {
+            if ($key === 'cardData') $next = 'cardData';
+            else if ($key === 'tokenData') $next = 'tokenData';
+            else if ($key === 'billingData') $next = 'billingData';
+        } else if ($expectedPath === 'standingInstruction') {
+            if ($key === 'data') $next = 'standingInstruction_data';
+        } else if ($expectedPath === 'riskData') {
+            if ($key === 'orderData') $next = 'riskData_orderData';
+            else if ($key === 'customerData') $next = 'riskData_customerData';
+            else if ($key === 'shippingData') $next = 'riskData_shippingData';
+            else if ($key === 'flightData') $next = 'riskData_flightData';
+            else if ($key === 'trainData') $next = 'riskData_trainData';
+            else if ($key === 'busData') $next = 'riskData_busData';
+            else if ($key === 'cabData') $next = 'riskData_cabData';
+            else if ($key === 'lodgingData') $next = 'riskData_lodgingData';
+        } else if ($expectedPath === 'riskData_flightData') {
+            if ($key === 'legData') $next = 'riskData_flightData_legData';
+            else if ($key === 'passengerData') $next = 'riskData_flightData_passengerData';
+        } else if ($expectedPath === 'riskData_trainData') {
+            if ($key === 'legData') $next = 'riskData_trainData_legData';
+            else if ($key === 'passengerData') $next = 'riskData_trainData_passengerData';
+        } else if ($expectedPath === 'riskData_busData') {
+            if ($key === 'legData') $next = 'riskData_busData_legData';
+            else if ($key === 'passengerData') $next = 'riskData_busData_passengerData';
+        } else if ($expectedPath === 'riskData_cabData') {
+            if ($key === 'legData') $next = 'riskData_cabData_legData';
+            else if ($key === 'passengerData') $next = 'riskData_cabData_passengerData';
+        } else if ($expectedPath === 'riskData_lodgingData') {
+            if ($key === 'rooms') $next = 'riskData_lodgingData_rooms';
+        }
+        return $next;
+    }
+
+    private function isAssociative(array $arr): bool
+    {
+        if ($arr === []) return true; // treat empty as associative for placement check
+        return array_keys($arr) !== range(0, count($arr) - 1);
+    }
+
+    private function check($obj, string $path, string $expectedPath, array &$warnings): void
+    {
+        if (!is_array($obj)) return;
+
+        foreach ($obj as $key => $value) {
+            $currentPath = $path ? ($path . '.' . $key) : $key;
+
+            // Only warn for containers (objects/arrays), never primitives
+            if ($this->isContainer($value)) {
+                $expected = self::EXPECTED_HIERARCHY[$expectedPath] ?? [];
+                if (!in_array($key, $expected, true)) {
+                    $warnings[] = [
+                        'type' => 'hierarchical_placement',
+                        'message' => 'Object "' . $key . '" at path "' . $currentPath . '" might be misplaced',
+                        'currentPath' => $currentPath,
+                        'expectedPath' => $expectedPath,
+                        'objectType' => $this->isAssociative($value) ? 'object' : 'array'
+                    ];
+                    // Do not recurse into misplaced subtree
+                    continue;
+                }
+
+                // Recurse into correctly placed containers
+                $nextExpected = $this->nextPathFor($expectedPath, $key);
+                if ($this->isAssociative($value)) {
+                    $this->check($value, $currentPath, $nextExpected, $warnings);
+                } else { // Indexed array
+                    foreach ($value as $index => $item) {
+                        $this->check($item, $currentPath . '[' . $index . ']', $nextExpected, $warnings);
+                    }
+                }
+            }
+        }
+    }
+}
