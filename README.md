@@ -10,22 +10,6 @@ Official PHP SDK for PayGlocal payment gateway integration. This SDK provides a 
 - JWE/JWS with OpenSSL (no external crypto deps)
 - Structured logging with redaction and env-driven levels
 
-## Requirements
-
-- PHP 8.0+
-- Extensions: curl, openssl, json
-
-## Installation
-
-### Composer (recommended)
-```bash
-composer require payglocal/pg-client-sdk-php
-```
-
-### Manual
-1) Copy `src/` into your project
-2) Use PSR-4 autoloading (see composer.json) or `require` as needed
-
 ## Configuration
 
 Create `.env` (or provide via environment) and load before using the SDK.
@@ -55,121 +39,200 @@ Place your PEM keys under `keys/` as configured above.
 
 ## Quick Start
 
+# PayGlocal PHP Backend
+
+Simple PHP backend for PayGlocal payment gateway integration.
+
+## File Structure
+
+```
+backendPhp/
+├── keys/
+│   ├── payglocal_public_key
+│   └── payglocal_private_key
+├── .env
+└── index.php
+```
+
+## Setup
+
+1. Install SDK:
+```bash
+git clone https://github.com/Parthsingh2111/pg-client-sdk-php.git
+cd pg-client-sdk-php
+composer install
+cd ..
+```
+
+2. Create .env file:
+```bash
+cp env.php .env
+# Edit .env with your PayGlocal credentials
+```
+
+3. Start server:
+```bash
+./start-server.sh
+```
+
+## Complete index.php Example
+
+Copy this code into your `index.php` file:
+
 ```php
 <?php
-require_once 'vendor/autoload.php';
+
+require_once __DIR__ . '/pg-client-sdk-php/vendor/autoload.php';
 
 use PayGlocal\PgClientSdk\PayGlocalClient;
 
+// CORS headers
+header('Access-Control-Allow-Origin: *');
+header('Access-Control-Allow-Methods: GET, POST, OPTIONS');
+header('Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With, Accept, Origin, ngrok-skip-browser-warning');
+header('Content-Type: application/json');
+if (($_SERVER['REQUEST_METHOD'] ?? '') === 'OPTIONS') {
+    http_response_code(204);
+    exit;
+}
+
+// Load environment variables
+$envPath = __DIR__ . '/.env';
+if (file_exists($envPath)) {
+    foreach (file($envPath, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES) as $line) {
+        if (strpos($line, '=') !== false && strpos(ltrim($line), '#') !== 0) {
+            [$k, $v] = explode('=', $line, 2);
+            $_ENV[trim($k)] = trim($v);
+        }
+    }
+}
+
+// Read PEM keys
+function readPemFromEnv(?string $value, string $baseDir): string {
+    $val = $value ?? '';
+    if ($val === '') return '';
+    if (strpos($val, '-----BEGIN') !== false) return $val;
+    if (file_exists($val)) return (string)file_get_contents($val);
+    $rel = rtrim($baseDir, '/').'/'.ltrim($val, '/');
+    if (file_exists($rel)) return (string)file_get_contents($rel);
+    return '';
+}
+
+$payglocalPublicKey = readPemFromEnv($_ENV['PAYGLOCAL_PUBLIC_KEY'] ?? '', __DIR__);
+$merchantPrivateKey = readPemFromEnv($_ENV['PAYGLOCAL_PRIVATE_KEY'] ?? '', __DIR__);
+
+// Initialize PayGlocal client
 $client = new PayGlocalClient([
-    'apiKey' => $_ENV['PAYGLOCAL_API_KEY'],
-    'merchantId' => $_ENV['PAYGLOCAL_MERCHANT_ID'],
-    'publicKeyId' => $_ENV['PAYGLOCAL_PUBLIC_KEY_ID'],
-    'privateKeyId' => $_ENV['PAYGLOCAL_PRIVATE_KEY_ID'],
-    'payglocalPublicKey' => file_get_contents($_ENV['PAYGLOCAL_PUBLIC_KEY']),
-    'merchantPrivateKey' => file_get_contents($_ENV['PAYGLOCAL_PRIVATE_KEY']),
-    'payglocalEnv' => $_ENV['PAYGLOCAL_Env_VAR'],
+    'apiKey' => $_ENV['PAYGLOCAL_API_KEY'] ?? '',
+    'merchantId' => $_ENV['PAYGLOCAL_MERCHANT_ID'] ?? '',
+    'publicKeyId' => $_ENV['PAYGLOCAL_PUBLIC_KEY_ID'] ?? '',
+    'privateKeyId' => $_ENV['PAYGLOCAL_PRIVATE_KEY_ID'] ?? '',
+    'payglocalPublicKey' => $payglocalPublicKey,
+    'merchantPrivateKey' => $merchantPrivateKey,
+    'payglocalEnv' => $_ENV['PAYGLOCAL_Env_VAR'] ?? 'UAT',
     'logLevel' => $_ENV['PAYGLOCAL_LOG_LEVEL'] ?? 'info',
 ]);
-```
 
-### JWT Payment
-```php
-$response = $client->initiateJwtPayment([
-    'merchantTxnId' => 'TXN_' . time(),
-    'paymentData' => [
-        'totalAmount' => '100.00',
-        'txnCurrency' => 'INR',
-    ],
-    'merchantCallbackURL' => 'https://your-domain.com/callback',
-]);
-```
-
-### API Key Payment
-```php
-$response = $client->initiateApiKeyPayment([
-    'merchantTxnId' => 'TXN_' . time(),
-    'paymentData' => [
-        'totalAmount' => '100.00',
-        'txnCurrency' => 'INR',
-    ],
-    'merchantCallbackURL' => 'https://your-domain.com/callback',
-]);
-```
-
-### Standing Instruction (SI) Payment
-```php
-$response = $client->initiateSiPayment([
-    'merchantTxnId' => 'SI_' . time(),
-    'paymentData' => [
-        'totalAmount' => '100.00',
-        'txnCurrency' => 'INR',
-    ],
-    'merchantCallbackURL' => 'https://your-domain.com/callback',
-    'standingInstruction' => [
-        'data' => [
-            'amount' => '100.00',
-            'numberOfPayments' => '12',
-            'frequency' => 'MONTHLY',
-            'type' => 'FIXED',
-            'startDate' => '20250101',
-        ],
-    ],
-]);
-```
-
-### Status / Refund / Capture (examples)
-```php
-$client->initiateCheckStatus(['gid' => 'your_gid']);
-$client->initiateRefund(['gid' => 'your_gid', 'merchantTxnId' => 'your_txn', 'paymentData' => ['totalAmount' => '50.00']]);
-$client->initiateCapture(['gid' => 'your_gid', 'merchantTxnId' => 'your_txn', 'paymentData' => ['totalAmount' => '100.00']]);
-```
-
-### SI Pause / Activate
-```php
-$client->initiatePauseSI(['merchantTxnId' => 'SI_PAUSE_' . time(), 'standingInstruction' => ['action' => 'PAUSE']]);
-$client->initiateActivateSI(['merchantTxnId' => 'SI_ACTIVATE_' . time(), 'standingInstruction' => ['action' => 'ACTIVATE']]);
-```
-
-## Validation
-
-- JSON Schema validation is applied to requests (string types for monetary values and IDs where applicable).
-- Hierarchical validation runs after schema validation and logs warnings only for misplaced containers (objects/arrays). It does not block requests. Example message:
-  - Object "trainData" at path "trainData" might be misplaced
-
-Notes:
-- Primitive fields (e.g., `totalAmount`, `txnCurrency`) are not part of hierarchical warnings.
-- Warnings are logged at `warn` level.
-
-## Logging
-
-- Configure via `PAYGLOCAL_LOG_LEVEL` or the `logLevel` option: `error | warn | info | debug`.
-- Sensitive fields are redacted where applicable.
-
-## Error Handling
-
-- Validation errors throw an `Exception` with a JSON-encoded body containing a consistent error shape:
-```json
-{
-  "gid": null,
-  "status": "REQUEST_ERROR",
-  "message": "Invalid request fields",
-  "timestamp": "...",
-  "reasonCode": "LOCAL-400-001",
-  "data": null,
-  "errors": { "field.path": "message" }
+// Helper functions
+function respond(int $code, array $data): void {
+    http_response_code($code);
+    echo json_encode($data);
+    exit;
 }
+
+function inputJson(): array {
+    $raw = file_get_contents('php://input');
+    $data = json_decode($raw, true);
+    return is_array($data) ? $data : [];
+}
+
+// Get request details
+$method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
+$path = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH);
+$query = [];
+parse_str(parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_QUERY) ?? '', $query);
+$input = inputJson();
+
+// Example payload for JWT payment
+$payload = [
+    "merchantTxnId" => "TXN_" . time(),
+    "paymentData" => [
+        "totalAmount" => "100.00",
+        "txnCurrency" => "INR",
+        "billingData" => [
+            "firstName" => "John",
+            "lastName" => "Doe",
+            "emailId" => "john.doe@example.com",
+            "mobileNo" => "9876543210",
+            "address1" => "123 Main Street",
+            "city" => "Mumbai",
+            "state" => "Maharashtra",
+            "postalCode" => "400001",
+            "country" => "IN"
+        ]
+    ],
+    "merchantCallbackURL" => "https://your-domain.com/callback"
+];
+
+// Process JWT payment
+try {
+    echo "=== PayGlocal JWT Payment Example ===\n";
+    echo "Payload: " . json_encode($payload, JSON_PRETTY_PRINT) . "\n\n";
+    
+    $payment = $client->initiateJwtPayment($payload);
+    
+    echo "=== SDK Response ===\n";
+    echo json_encode($payment, JSON_PRETTY_PRINT) . "\n\n";
+    
+    $paymentLink = $payment['data']['redirectUrl'] ?? $payment['data']['redirect_url'] ?? $payment['data']['payment_link'] ?? $payment['data']['paymentLink'] ?? $payment['redirectUrl'] ?? $payment['redirect_url'] ?? $payment['payment_link'] ?? $payment['paymentLink'] ?? null;
+    $gid = $payment['data']['gid'] ?? $payment['data']['transactionId'] ?? $payment['gid'] ?? $payment['transactionId'] ?? null;
+    
+    if (!$paymentLink || !$gid) {
+        respond(500, [
+            'status' => 'FAILURE',
+            'message' => 'Payment initiation failed: missing payment link or transaction ID',
+            'raw_response' => $payment
+        ]);
+    }
+    
+    respond(200, [
+        'status' => 'SUCCESS',
+        'message' => 'Payment initiated successfully',
+        'payment_link' => $paymentLink,
+        'gid' => $gid,
+        'raw_response' => $payment
+    ]);
+    
+} catch (\Exception $e) {
+    echo "=== Error ===\n";
+    echo "Error: " . $e->getMessage() . "\n";
+    echo "Trace: " . $e->getTraceAsString() . "\n\n";
+    
+    respond(500, [
+        'status' => 'ERROR',
+        'message' => $e->getMessage(),
+        'trace' => $e->getTraceAsString()
+    ]);
+}
+?>
 ```
 
-## Local Testing (built-in server)
+## Usage
 
-```bash
-php -S localhost:3001 index.php
-```
-Then send HTTP requests to your routes. For direct CLI runs:
-```bash
-php index.php
-```
+1. Copy the `index.php` code above
+2. Configure your `.env` file with PayGlocal credentials
+3. Place PEM keys in `keys/` directory
+4. Run: `./start-server.sh`
+5. Open: `http://localhost:3001`
+
+The example will automatically process a JWT payment and display the complete response in console and JSON format.
+
+## Response
+
+The server will return:
+- Payment link for redirection
+- Transaction ID (gid)
+- Complete raw response from PayGlocal
 
 ## Troubleshooting
 
@@ -178,6 +241,3 @@ php index.php
 - Match example types (monetary values as strings) to avoid validation errors.
 - Increase log level to `debug` when diagnosing.
 
-## License
-
-MIT 
