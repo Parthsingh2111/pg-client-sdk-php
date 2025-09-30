@@ -159,11 +159,33 @@ class PaymentService
             ],
             'customValidation' => function($params) {
                 // Custom validation for SI payment
-                if (isset($params['standingInstruction']['action'])) {
-                    $validActions = ['PAUSE', 'ACTIVATE'];
-                    if (!in_array(strtoupper($params['standingInstruction']['action']), $validActions)) {
-                        throw new \Exception('Invalid action in standingInstruction. Must be one of: ' . implode(', ', $validActions));
-                    }
+
+                if (!isset($params['standingInstruction']['data']) || !is_array($params['standingInstruction']['data'])) {
+                    throw new \Exception('standingInstruction.data is required');
+                }
+
+                $data = $params['standingInstruction']['data'];
+
+                // type must be FIXED or VARIABLE
+                if (!isset($data['type']) || !in_array(strtoupper($data['type']), ['FIXED', 'VARIABLE'])) {
+                    throw new \Exception('Invalid SI type. Must be either FIXED or VARIABLE');
+                }
+
+                $type = strtoupper($data['type']);
+
+                // startDate required for FIXED, must not be present for VARIABLE
+                if ($type === 'FIXED' && empty($data['startDate'])) {
+                    throw new \Exception('startDate is required for FIXED SI type');
+                }
+                if ($type === 'VARIABLE' && isset($data['startDate']) && $data['startDate'] !== '' && $data['startDate'] !== null) {
+                    throw new \Exception('startDate should not be included for VARIABLE SI type');
+                }
+
+                // Either amount or maxAmount must be present
+                $hasAmount = isset($data['amount']) && $data['amount'] !== '' && $data['amount'] !== null;
+                $hasMaxAmount = isset($data['maxAmount']) && $data['maxAmount'] !== '' && $data['maxAmount'] !== null;
+                if (!($hasAmount || $hasMaxAmount)) {
+                    throw new \Exception('Either amount or maxAmount is required for standingInstruction.data');
                 }
             }
         ]);
@@ -189,6 +211,13 @@ class PaymentService
             ],
             'customValidation' => function($params) {
                 // Custom validation for Auth payment
+                // captureTxn must be false for Auth payment
+                if (!array_key_exists('captureTxn', $params) || is_null($params['captureTxn'])) {
+                    throw new \Exception('captureTxn is required and must be false for Auth payment');
+                }
+                if (filter_var($params['captureTxn'], FILTER_VALIDATE_BOOLEAN)) {
+                    throw new \Exception('captureTxn should be false for Auth payment');
+                }
                 if (isset($params['paymentData']['totalAmount'])) {
                     if (!is_numeric($params['paymentData']['totalAmount']) || $params['paymentData']['totalAmount'] <= 0) {
                         throw new \Exception('Invalid totalAmount. Must be a positive number.');
@@ -197,4 +226,4 @@ class PaymentService
             }
         ]);
     }
-} 
+}

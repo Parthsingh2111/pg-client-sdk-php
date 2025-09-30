@@ -9,6 +9,7 @@ use PayGlocal\PgClientSdk\Services\CaptureService;
 use PayGlocal\PgClientSdk\Services\ReversalService;
 use PayGlocal\PgClientSdk\Services\StatusService;
 use PayGlocal\PgClientSdk\Services\SiUpdateService;
+use PayGlocal\PgClientSdk\Services\SiOnDemandService;
 use PayGlocal\PgClientSdk\Utils\Logger;
 
 /**
@@ -154,6 +155,30 @@ class PayGlocalClient
     {
         $service = new SiUpdateService($this->config);
         return $service->initiateActivateSI($params);
+    }
+
+    /**
+     * Initiate SI On-Demand sale (variable amount)
+     * @param array $params expects standingInstruction.mandateId, paymentData.totalAmount, merchantTxnId
+     * @return array Response
+     * @throws \Exception
+     */
+    public function initiateSiOnDemandVariable(array $params): array
+    {
+        $service = new SiOnDemandService($this->config);
+        return $service->initiateSiOnDemandVariable($params);
+    }
+
+    /**
+     * Initiate SI On-Demand sale (fixed amount)
+     * @param array $params expects standingInstruction.mandateId, merchantTxnId
+     * @return array Response
+     * @throws \Exception
+     */
+    public function initiateSiOnDemandFixed(array $params): array
+    {
+        $service = new SiOnDemandService($this->config);
+        return $service->initiateSiOnDemandFixed($params);
     }
 
     /**

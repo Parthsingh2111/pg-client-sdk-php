@@ -37,7 +37,7 @@ class CaptureService
         $merchantTxnId = $params['merchantTxnId'];
         
         Logger::info('Initiating capture operation', ['gid' => $gid, 'captureType' => $captureType, 'merchantTxnId' => $merchantTxnId]);
-        
+        Logger::info('params: ' . json_encode($params));
         // 1. Comprehensive validation (without schema validation for transaction services)
         ValidationHelper::validatePayload($params, [
             'requiredFields' => ['gid', 'merchantTxnId', 'captureType'], // All required fields

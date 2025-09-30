@@ -31,6 +31,7 @@ class Endpoints
     public const SI_SERVICE = [
         'MODIFY' => '/gl/v1/payments/si/modify',
         'STATUS' => '/gl/v1/payments/si/status',
+        'SALE' => '/gl/v1/payments/si/sale',
     ];
 
     /**
