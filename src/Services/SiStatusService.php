@@ -27,7 +27,7 @@ class SiStatusService
      */
     public function initiateSiStatusCheck(array $params): array
     {
-        Logger::info('Initiating SI status check', [ 'mandateId' => $params['standingInstruction']['mandateId'] ?? null ]);
+        Logger::info('Initiating SI status check');
 
         ValidationHelper::validatePayload($params, [
             'requiredFields' => [ 'standingInstruction', 'standingInstruction.mandateId' ],

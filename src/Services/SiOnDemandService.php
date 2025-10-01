@@ -33,7 +33,6 @@ class SiOnDemandService
     {
         Logger::info('Initiating SI on-demand sale', [
             'merchantTxnId' => $params['merchantTxnId'] ?? 'unknown',
-            'mandateId' => $params['mandateId'] ?? null,
         ]);
 
         // Minimal validation (no schema)
@@ -83,7 +82,6 @@ class SiOnDemandService
     public function initiateSiOnDemandFixed(array $params): array
     {
         Logger::info('Initiating SI on-demand sale', [
-            'merchantTxnId' => $params['merchantTxnId'] ?? 'unknown',
             'mandateId' => $params['mandateId'] ?? null,
         ]);
 
