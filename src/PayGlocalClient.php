@@ -10,6 +10,7 @@ use PayGlocal\PgClientSdk\Services\ReversalService;
 use PayGlocal\PgClientSdk\Services\StatusService;
 use PayGlocal\PgClientSdk\Services\SiUpdateService;
 use PayGlocal\PgClientSdk\Services\SiOnDemandService;
+use PayGlocal\PgClientSdk\Services\SiStatusService;
 use PayGlocal\PgClientSdk\Utils\Logger;
 
 /**
@@ -179,6 +180,18 @@ class PayGlocalClient
     {
         $service = new SiOnDemandService($this->config);
         return $service->initiateSiOnDemandFixed($params);
+    }
+
+    /**
+     * Check SI status by mandateId
+     * @param array $params expects ['standingInstruction' => ['mandateId' => string]]
+     * @return array Response
+     * @throws \Exception
+     */
+    public function initiateSiStatusCheck(array $params): array
+    {
+        $service = new SiStatusService($this->config);
+        return $service->initiateSiStatusCheck($params);
     }
 
     /**
