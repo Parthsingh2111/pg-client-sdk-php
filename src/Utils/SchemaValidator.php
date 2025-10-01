@@ -4,7 +4,6 @@ namespace PayGlocal\PgClientSdk\Utils;
 
 /**
  * Schema Validator for JSON schema validation
- * Mirrors JavaScript schemaValidator.js behavior
  */
 class SchemaValidator
 {

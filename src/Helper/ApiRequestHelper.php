@@ -8,7 +8,6 @@ use PayGlocal\PgClientSdk\Constants\Endpoints;
 
 /**
  * Make API request with simple error handling
- * Matches JavaScript apiRequestHelper behavior exactly
  */
 class ApiRequestHelper
 {

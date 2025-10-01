@@ -4,12 +4,11 @@ namespace PayGlocal\PgClientSdk\Helper;
 
 /**
  * Build JWT headers with token
- * Matches JavaScript headerHelper behavior exactly
  */
 class HeaderHelper
 {
     /**
-     * Build JWT headers with token (matches JavaScript exactly)
+     * Build JWT headers with token 
      * @param string $jws JWS token
      * @param array $customHeaders Additional custom headers
      * @return array Headers object
@@ -23,7 +22,7 @@ class HeaderHelper
     }
 
     /**
-     * Build API key headers (matches JavaScript exactly)
+     * Build API key headers
      * @param string $apiKey API key
      * @param array $customHeaders Additional custom headers
      * @return array Headers object
@@ -37,7 +36,7 @@ class HeaderHelper
     }
 
     /**
-     * Build headers for SI operations (matches JavaScript exactly)
+     * Build headers for SI operations 
      * @param string $jws JWS token
      * @param array $customHeaders Additional custom headers
      * @return array Headers object

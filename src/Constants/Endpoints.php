@@ -4,7 +4,6 @@ namespace PayGlocal\PgClientSdk\Constants;
 
 /**
  * PayGlocal API Endpoints
- * Matches JavaScript endpoints behavior exactly
  */
 class Endpoints
 {

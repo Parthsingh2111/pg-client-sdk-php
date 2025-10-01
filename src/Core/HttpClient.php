@@ -6,7 +6,6 @@ use PayGlocal\PgClientSdk\Utils\Logger;
 
 /**
  * HTTP client using cURL with timeout protection
- * Matches JavaScript http behavior exactly
  */
 class HttpClient
 {

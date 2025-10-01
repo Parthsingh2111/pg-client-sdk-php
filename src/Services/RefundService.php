@@ -12,7 +12,6 @@ use PayGlocal\PgClientSdk\Utils\Logger;
 
 /**
  * Refund Service for handling refund operations
- * Matches JavaScript refund behavior exactly
  */
 class RefundService
 {

@@ -15,7 +15,6 @@ use PayGlocal\PgClientSdk\Utils\Logger;
 
 /**
  * PayGlocalClient for interacting with PayGlocal API.
- * Matches JavaScript PayGlocalClient behavior exactly
  */
 class PayGlocalClient
 {
@@ -30,10 +29,10 @@ class PayGlocalClient
     {
         $this->config = new Config($config);
         
-        // Set log level (matches JavaScript behavior)
+        // Set log level 
         Logger::setLevel($this->config->logLevel ?? 'info');
         
-        // Log configuration (matches JavaScript behavior)
+        // Log configuration 
         Logger::logConfig($this->config);
         Logger::info('PayGlocalClient initialized successfully');
     }

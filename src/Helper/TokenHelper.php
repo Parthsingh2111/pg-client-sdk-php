@@ -7,7 +7,6 @@ use PayGlocal\PgClientSdk\Utils\Logger;
 
 /**
  * Generate JWT tokens (JWE and JWS) for API requests
- * Matches JavaScript tokenHelper behavior exactly
  */
 class TokenHelper
 {

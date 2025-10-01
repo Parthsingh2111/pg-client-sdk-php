@@ -4,7 +4,6 @@ namespace PayGlocal\PgClientSdk\Utils;
 
 /**
  * Validation utilities
- * Matches JavaScript validators behavior exactly
  */
 class Validators
 {

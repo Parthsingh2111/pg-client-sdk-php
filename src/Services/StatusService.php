@@ -12,7 +12,6 @@ use PayGlocal\PgClientSdk\Utils\Logger;
 
 /**
  * Status Service for handling status check operations
- * Matches JavaScript status behavior exactly
  */
 class StatusService
 {

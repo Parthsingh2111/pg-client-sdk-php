@@ -12,12 +12,11 @@ use Jose\Component\Signature\Serializer\CompactSerializer as JWSCompactSerialize
 
 /**
  * Crypto operations for JWE and JWS generation
- * Matches JavaScript crypto.js structure and logic exactly
  */
 class Crypto
 {
     /**
-     * Convert PEM to key object (matches JavaScript exactly)
+     * Convert PEM to key object 
      * @param string $pem PEM key
      * @param bool $isPrivate Is private key
      * @return JWK Key object
@@ -38,7 +37,8 @@ class Crypto
     }
 
     /**
-     * Generate JWE for payload (matches JavaScript exactly)
+     * Generate JWE for payload 
+     * 
      * @param array $payload Payload to encrypt
      * @param Config $config Configuration object
      * @return string JWE token
@@ -46,13 +46,14 @@ class Crypto
      */
     public static function generateJWE(array $payload, Config $config): string
     {
-        $iat = time() * 1000; // Convert to milliseconds (matches JavaScript Date.now())
+        $iat = time() * 1000; // Convert to milliseconds
+        
         $exp = $iat + ($config->tokenExpiration ?? 300000); // Default 5 minutes
         
         $publicKey = self::pemToKey($config->payglocalPublicKey, false);
         $payloadStr = json_encode($payload);
 
-        // Create JWE builder (matches JavaScript jose.CompactEncrypt)
+        // Create JWE builder (jose.CompactEncrypt)
         $jweBuilder = new JWEBuilder(
             new \Jose\Component\Core\AlgorithmManager([
                 new \Jose\Component\Encryption\Algorithm\KeyEncryption\RSAOAEP256(),
@@ -62,7 +63,8 @@ class Crypto
             ])
         );
 
-        // Build JWE with protected header (matches JavaScript exactly)
+        // Build JWE with protected header 
+        
         $jwe = $jweBuilder
             ->create()
             ->withPayload($payloadStr)
@@ -77,13 +79,14 @@ class Crypto
             ->addRecipient($publicKey)
             ->build();
 
-        // Serialize to compact format (matches JavaScript jose.CompactEncrypt)
+        // Serialize to compact format 
         $serializer = new JWECompactSerializer();
         return $serializer->serialize($jwe, 0);
     }
 
     /**
-     * Generate JWS for a digestable string (matches JavaScript exactly)
+     * Generate JWS for a digestable string
+     * 
      * @param string $toDigest The input string to hash (can be JWE or payloadPath)
      * @param Config $config Configuration object
      * @return string JWS token
@@ -91,10 +94,10 @@ class Crypto
      */
     public static function generateJWS(string $toDigest, Config $config): string
     {
-        $iat = time() * 1000; // Convert to milliseconds (matches JavaScript Date.now())
+        $iat = time() * 1000; // Convert to milliseconds 
         $exp = $iat + ($config->tokenExpiration ?? 300000); // Default 5 minutes
 
-        // Create digest (matches JavaScript crypto.createHash('sha256'))
+        // Create digest ( crypto.createHash('sha256'))
         $digest = base64_encode(hash('sha256', $toDigest, true));
         $digestObject = [
             'digest' => $digest,
@@ -105,14 +108,14 @@ class Crypto
 
         $privateKey = self::pemToKey($config->merchantPrivateKey, true);
 
-        // Create JWS builder (matches JavaScript jose.SignJWT)
+        // Create JWS builder (jose.SignJWT)
         $jwsBuilder = new JWSBuilder(
             new \Jose\Component\Core\AlgorithmManager([
                 new \Jose\Component\Signature\Algorithm\RS256(),
             ])
         );
 
-        // Build JWS with protected header (matches JavaScript exactly)
+        // Build JWS with protected header 
         $jws = $jwsBuilder
             ->create()
             ->withPayload(json_encode($digestObject))
@@ -126,7 +129,7 @@ class Crypto
             ])
             ->build();
 
-        // Serialize to compact format (matches JavaScript jose.SignJWT)
+        // Serialize to compact format (jose.SignJWT)
         $serializer = new JWSCompactSerializer();
         return $serializer->serialize($jws, 0);
     }

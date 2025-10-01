@@ -12,7 +12,6 @@ use PayGlocal\PgClientSdk\Utils\Logger;
 
 /**
  * Capture Service for handling capture operations
- * Matches JavaScript capture behavior exactly
  */
 class CaptureService
 {

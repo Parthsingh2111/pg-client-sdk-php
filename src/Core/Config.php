@@ -6,7 +6,6 @@ use PayGlocal\PgClientSdk\Utils\Logger;
 
 /**
  * Configuration class for PayGlocalClient.
- * Matches JavaScript Config behavior exactly
  */
 class Config
 {

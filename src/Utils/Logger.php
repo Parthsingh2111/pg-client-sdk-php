@@ -5,7 +5,6 @@ namespace PayGlocal\PgClientSdk\Utils;
 /**
  * Enhanced Logger for PayGlocal SDK
  * Provides structured logging with different levels and formatting
- * Matches JavaScript logger behavior exactly
  */
 class Logger
 {

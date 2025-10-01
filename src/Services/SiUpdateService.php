@@ -12,7 +12,6 @@ use PayGlocal\PgClientSdk\Utils\Logger;
 
 /**
  * Standing Instruction Update Service
- * Matches JavaScript siUpdate behavior exactly
  */
 class SiUpdateService
 {

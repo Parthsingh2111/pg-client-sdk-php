@@ -12,7 +12,6 @@ use PayGlocal\PgClientSdk\Utils\Logger;
 
 /**
  * Reversal Service for handling reversal operations
- * Matches JavaScript reversal behavior exactly
  */
 class ReversalService
 {

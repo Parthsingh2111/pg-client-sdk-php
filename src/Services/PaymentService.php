@@ -12,7 +12,6 @@ use PayGlocal\PgClientSdk\Utils\Logger;
 
 /**
  * Payment Service for handling all payment types
- * Matches JavaScript payment behavior exactly
  */
 class PaymentService
 {

@@ -8,7 +8,6 @@ use PayGlocal\PgClientSdk\Utils\Logger;
 
 /**
  * Simple validation function
- * Matches JavaScript validationHelper behavior exactly
  */
 class ValidationHelper
 {
